@@ -1,0 +1,11 @@
+node_modules/
+cv.pdf
+.DS_Store
+
+# latex
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.synctex.gz
+*.out
