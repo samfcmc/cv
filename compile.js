@@ -1,11 +1,15 @@
 const latex = require("node-latex");
 const fs = require("fs");
 const nodeWatch = require("node-watch");
+const open = require("open");
+
 const BUILD_DIR = `${__dirname}/build`;
+const SOURCE_DIR = `${__dirname}/src`;
 
 const INPUT_FILE = "cv.tex";
 const OUTPUT_FILE = "cv.pdf";
 
+const INPUT_PATH = `${SOURCE_DIR}/${INPUT_FILE}`;
 const OUTPUT_PATH = `${BUILD_DIR}/${OUTPUT_FILE}`;
 
 const makeBuildFolder = () => {
@@ -13,28 +17,35 @@ const makeBuildFolder = () => {
   fs.mkdirSync(BUILD_DIR, { recursive: true });
 };
 
-const buildPDF = () => {
-  const input = fs.createReadStream(INPUT_FILE);
+const buildPDF = ({ onFinish } = {}) => {
+  const input = fs.createReadStream(INPUT_PATH);
   const output = fs.createWriteStream(OUTPUT_PATH);
   const pdf = latex(input, {
-    inputs: __dirname,
+    inputs: SOURCE_DIR,
     precompiled: BUILD_DIR,
   });
 
   pdf.pipe(output);
   pdf.on("error", (err) => console.error(err));
-  pdf.on("finish", () => console.log("PDF generated!"));
+  pdf.on("finish", () => {
+    console.log("PDF generated!");
+    if (onFinish) {
+      onFinish();
+    }
+  });
 };
 
-const compile = () => {
+const compile = (options = {}) => {
   makeBuildFolder();
-  buildPDF();
+  buildPDF(options);
 };
 
 const watch = () => {
-  compile();
+  const onOpen = () => open(OUTPUT_PATH);
+
+  compile({ onFinish: onOpen });
   nodeWatch(
-    __dirname,
+    SOURCE_DIR,
     {
       recursive: true,
       filter: (file, skip) => {
